@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liquid Glass</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh; color: #fff; overflow-x: hidden;
+      /* Kolorowe paski — świetnie widać refrakcję */
+      background:
+        repeating-linear-gradient(
+          55deg,
+          rgba(124,58,237,0.5) 0px,  rgba(124,58,237,0.5) 38px,
+          rgba(6,182,212,0.45) 38px,  rgba(6,182,212,0.45) 76px,
+          rgba(236,72,153,0.45) 76px, rgba(236,72,153,0.45) 114px,
+          rgba(234,179,8,0.42) 114px, rgba(234,179,8,0.42) 152px,
+          rgba(16,185,129,0.45) 152px, rgba(16,185,129,0.45) 190px,
+          rgba(249,115,22,0.42) 190px, rgba(249,115,22,0.42) 228px
+        ),
+        repeating-linear-gradient(
+          -30deg,
+          rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px,
+          transparent 1px, transparent 24px
+        ),
+        radial-gradient(ellipse 70% 50% at 25% 35%, #6d28d9, transparent 70%),
+        radial-gradient(ellipse 60% 45% at 78% 22%, #0284c7, transparent 65%),
+        radial-gradient(ellipse 65% 55% at 55% 78%, #be185d, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 88% 68%, #a16207, transparent 55%),
+        radial-gradient(ellipse 50% 45% at 8% 82%, #047857, transparent 55%),
+        #080810;
+      background-attachment: fixed;
+    }
+
+    /* Siatka kropek */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: radial-gradient(circle 1.5px, rgba(255,255,255,0.10) 1px, transparent 1.5px);
+      background-size: 24px 24px;
+      background-attachment: fixed;
+    }
+
+    /* Znak wodny */
+    .bg-watermark {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      overflow: hidden; padding: 16px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.04);
+      line-height: 2.2; word-spacing: 10px;
+    }
+
+    .page { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 50px 24px; }
+
+    header { text-align: center; margin-bottom: 48px; }
+    header h1 {
+      font-size: 2.4rem; font-weight: 700; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff 20%, rgba(255,255,255,0.3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    header p { color: rgba(255,255,255,0.3); font-weight: 300; margin-top: 6px; font-size: 0.9rem; }
+
+    .section { margin-bottom: 44px; }
+    .label {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.14em;
+      color: rgba(255,255,255,0.2); margin-bottom: 12px;
+    }
+    .note {
+      font-size: 0.7rem; color: rgba(255,255,255,0.2); margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    /* Bloki sliderów */
+    .s-block { position: relative; margin-bottom: 36px; }
+    .s-block:last-child { margin-bottom: 0; }
+    .s-undertext {
+      position: absolute; left: 32px; right: 40px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; user-select: none; overflow: hidden; white-space: nowrap;
+      font-size: 2.6rem; font-weight: 900; letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      z-index: 0;
+    }
+    .s-row {
+      display: flex; align-items: center; gap: 12px; height: 70px;
+      position: relative; z-index: 1;
+    }
+    .s-icon { width: 20px; flex-shrink: 0; text-align: center; font-size: 0.85rem; opacity: 0.4; }
+    .s-track { flex: 1; height: 100%; display: flex; align-items: center; }
+    .s-val {
+      min-width: 28px; text-align: right; flex-shrink: 0;
+      font-size: 0.7rem; color: rgba(255,255,255,0.25);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Kontrolki przezroczystości */
+    .s-opacity {
+      display: flex; flex-direction: column; gap: 2px; flex-shrink: 0;
+    }
+    .s-opacity button {
+      width: 22px; height: 22px; border: none; border-radius: 6px; cursor: pointer;
+      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.35);
+      font-size: 0.7rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .s-opacity button:hover {
+      background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.6);
+    }
+    .s-opacity-val {
+      font-size: 0.5rem; color: rgba(255,255,255,0.18); text-align: center;
+      font-variant-numeric: tabular-nums; min-width: 22px;
+    }
+
+    /* Slidery pionowe */
+    .v-group { display: flex; gap: 28px; justify-content: center; height: 360px; }
+    .v-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .v-track { width: 80px; flex: 1; }
+    .v-lbl { font-size: 0.55rem; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    /* Panele szklane */
+    .glass-card { padding: 22px; margin-bottom: 16px; }
+    .glass-card h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 3px; }
+    .glass-card p { font-size: 0.75rem; color: rgba(255,255,255,0.4); line-height: 1.5; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+
+    footer { text-align: center; padding: 24px 0; margin-top: 24px; }
+    footer p { font-size: 0.5rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(255,255,255,0.1); }
+    footer a { color: rgba(255,255,255,0.18); text-decoration: none; }
+
+    @media (max-width: 560px) {
+      header h1 { font-size: 1.8rem; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-watermark" id="bgW"></div>
+
+  <div class="page">
+
+    <header>
+      <h1>Liquid Glass</h1>
+      <p>Przesuń slider — obserwuj jak światło się załamuje</p>
+    </header>
+
+    <!-- SLIDERY POZIOME -->
+    <div class="section">
+      <div class="label">Slidery</div>
+
+      <div class="s-block">
+        <div class="s-undertext">CLEAR PRZEZROCZYSTE SZKŁO</div>
+        <div class="s-row">
+          <div class="s-icon">&#9728;&#65039;</div>
+          <div class="s-track" id="s1"></div>
+          <div class="s-val" id="v1">50</div>
+          <div class="s-opacity">
+            <button data-slider="s1" data-dir="up">+</button>
+            <div class="s-opacity-val" id="op1">3%</div>
+            <button data-slider="s1" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">MEDIUM ŚREDNIA REFRAKCJA</div>
+        <div class="s-row">
+          <div class="s-icon">&#128264;</div>
+          <div class="s-track" id="s2"></div>
+          <div class="s-val" id="v2">70</div>
+          <div class="s-opacity">
+            <button data-slider="s2" data-dir="up">+</button>
+            <div class="s-opacity-val" id="op2">4%</div>
+            <button data-slider="s2" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">FROSTED MATOWE SZKŁO</div>
+        <div class="s-row">
+          <div class="s-icon">&#128167;</div>
+          <div class="s-track" id="s3"></div>
+          <div class="s-val" id="v3">30</div>
+          <div class="s-opacity">
+            <button data-slider="s3" data-dir="up">+</button>
+            <div class="s-opacity-val" id="op3">5%</div>
+            <button data-slider="s3" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">Każdy slider ma inną moc szkła: od delikatnego frosted po głęboki blur.</p>
+    </div>
+
+    <!-- SLIDERY REFRAKCJI -->
+    <div class="section">
+      <div class="label">Refrakcja — test zniekształcenia</div>
+
+      <div class="s-block">
+        <div class="s-undertext">REFRACTION 4PX SUBTELNA</div>
+        <div class="s-row">
+          <div class="s-icon">&#128142;</div>
+          <div class="s-track" id="r1"></div>
+          <div class="s-val" id="rv1">50</div>
+          <div class="s-opacity">
+            <button data-slider="r1" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opr1">2%</div>
+            <button data-slider="r1" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">REFRACTION 12PX ŚREDNIA</div>
+        <div class="s-row">
+          <div class="s-icon">&#127754;</div>
+          <div class="s-track" id="r2"></div>
+          <div class="s-val" id="rv2">50</div>
+          <div class="s-opacity">
+            <button data-slider="r2" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opr2">3%</div>
+            <button data-slider="r2" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">REFRACTION 30PX MOCNA</div>
+        <div class="s-row">
+          <div class="s-icon">&#129695;</div>
+          <div class="s-track" id="r3"></div>
+          <div class="s-val" id="rv3">50</div>
+          <div class="s-opacity">
+            <button data-slider="r3" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opr3">3%</div>
+            <button data-slider="r3" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">REFRACTION 60PX SZALONA</div>
+        <div class="s-row">
+          <div class="s-icon">&#9889;</div>
+          <div class="s-track" id="r4"></div>
+          <div class="s-val" id="rv4">50</div>
+          <div class="s-opacity">
+            <button data-slider="r4" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opr4">3%</div>
+            <button data-slider="r4" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">MOTION REFRACTION DYNAMICZNA</div>
+        <div class="s-row">
+          <div class="s-icon">&#128640;</div>
+          <div class="s-track" id="r5"></div>
+          <div class="s-val" id="rv5">50</div>
+          <div class="s-opacity">
+            <button data-slider="r5" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opr5">2%</div>
+            <button data-slider="r5" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">Refrakcja = zniekształcenie pikseli pod szkłem. Różne moce + jeden dynamiczny (rośnie przy ruchu).</p>
+    </div>
+
+    <!-- SLIDERY REFRAKCJI — WYSOKIE WARTOŚCI -->
+    <div class="section">
+      <div class="label">Refrakcja 70–90px — różna przezroczystość</div>
+
+      <div class="s-block">
+        <div class="s-undertext">70PX CLEAR PEŁNA PRZEZROCZYSTOŚĆ</div>
+        <div class="s-row">
+          <div class="s-icon">&#128308;</div>
+          <div class="s-track" id="rh1"></div>
+          <div class="s-val" id="rhv1">50</div>
+          <div class="s-opacity">
+            <button data-slider="rh1" data-dir="up">+</button>
+            <div class="s-opacity-val" id="oprh1">1%</div>
+            <button data-slider="rh1" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">80PX FROST LEKKI BLUR</div>
+        <div class="s-row">
+          <div class="s-icon">&#128993;</div>
+          <div class="s-track" id="rh2"></div>
+          <div class="s-val" id="rhv2">50</div>
+          <div class="s-opacity">
+            <button data-slider="rh2" data-dir="up">+</button>
+            <div class="s-opacity-val" id="oprh2">4%</div>
+            <button data-slider="rh2" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">90PX DEEP DUŻY BLUR</div>
+        <div class="s-row">
+          <div class="s-icon">&#128995;</div>
+          <div class="s-track" id="rh3"></div>
+          <div class="s-val" id="rhv3">50</div>
+          <div class="s-opacity">
+            <button data-slider="rh3" data-dir="up">+</button>
+            <div class="s-opacity-val" id="oprh3">8%</div>
+            <button data-slider="rh3" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">Te same wysokie refrakcje, ale od w pełni przezroczystego po mocno zamazany frost.</p>
+    </div>
+
+    <!-- EDGE REFRACTION -->
+    <div class="section">
+      <div class="label">Refrakcja krawędziowa — centrum czyste, krawędzie zniekształcone</div>
+
+      <div class="s-block">
+        <div class="s-undertext">EDGE 70PX WĄSKA KRAWĘDŹ</div>
+        <div class="s-row">
+          <div class="s-icon">&#128371;</div>
+          <div class="s-track" id="re1"></div>
+          <div class="s-val" id="rev1">50</div>
+          <div class="s-opacity">
+            <button data-slider="re1" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opre1">1%</div>
+            <button data-slider="re1" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">EDGE 70PX SZEROKA KRAWĘDŹ</div>
+        <div class="s-row">
+          <div class="s-icon">&#128374;</div>
+          <div class="s-track" id="re2"></div>
+          <div class="s-val" id="rev2">50</div>
+          <div class="s-opacity">
+            <button data-slider="re2" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opre2">1%</div>
+            <button data-slider="re2" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">EDGE 70PX PEŁNA GRADIENT</div>
+        <div class="s-row">
+          <div class="s-icon">&#127752;</div>
+          <div class="s-track" id="re3"></div>
+          <div class="s-val" id="rev3">50</div>
+          <div class="s-opacity">
+            <button data-slider="re3" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opre3">1%</div>
+            <button data-slider="re3" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">VERSUS FULL 70PX PORÓWNANIE</div>
+        <div class="s-row">
+          <div class="s-icon">&#128269;</div>
+          <div class="s-track" id="re4"></div>
+          <div class="s-val" id="rev4">50</div>
+          <div class="s-opacity">
+            <button data-slider="re4" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opre4">1%</div>
+            <button data-slider="re4" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">Porównaj: 3 warianty krawędziowe (wąska/szeroka/gradient) vs pełna refrakcja 70px na dole.</p>
+    </div>
+
+    <!-- DZIKIE KRAWĘDZIE, CZYSTY ŚRODEK (turbulencja) -->
+    <div class="section">
+      <div class="label">Krawędzie turbulencja — czysty środek</div>
+
+      <div class="s-block">
+        <div class="s-undertext">TURB EDGE 60PX SOFT 40-80%</div>
+        <div class="s-row">
+          <div class="s-icon">&#128167;</div>
+          <div class="s-track" id="we6"></div>
+          <div class="s-val" id="wev6">50</div>
+          <div class="s-opacity">
+            <button data-slider="we6" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opwe6">1%</div>
+            <button data-slider="we6" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">Poprzedni faworyt — turbulencja na krawędziach, do porównania z nowym podejściem poniżej.</p>
+    </div>
+
+    <!-- EDGE LENS — gładka soczewka na krawędziach, idealnie czysty środek -->
+    <div class="section">
+      <div class="label">Soczewka krawędziowa — Apple glass style</div>
+
+      <div class="s-block">
+        <div class="s-undertext">EDGE LENS 20PX SUBTLE 50-90%</div>
+        <div class="s-row">
+          <div class="s-icon">&#128142;</div>
+          <div class="s-track" id="el1"></div>
+          <div class="s-val" id="elv1">50</div>
+          <div class="s-opacity">
+            <button data-slider="el1" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opel1">1%</div>
+            <button data-slider="el1" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">EDGE LENS 40PX MEDIUM 45-85%</div>
+        <div class="s-row">
+          <div class="s-icon">&#128371;</div>
+          <div class="s-track" id="el2"></div>
+          <div class="s-val" id="elv2">50</div>
+          <div class="s-opacity">
+            <button data-slider="el2" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opel2">1%</div>
+            <button data-slider="el2" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">EDGE LENS 60PX STRONG 40-80%</div>
+        <div class="s-row">
+          <div class="s-icon">&#127752;</div>
+          <div class="s-track" id="el3"></div>
+          <div class="s-val" id="elv3">50</div>
+          <div class="s-opacity">
+            <button data-slider="el3" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opel3">1%</div>
+            <button data-slider="el3" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">EDGE LENS 80PX WIDE 30-75%</div>
+        <div class="s-row">
+          <div class="s-icon">&#128165;</div>
+          <div class="s-track" id="el4"></div>
+          <div class="s-val" id="elv4">50</div>
+          <div class="s-opacity">
+            <button data-slider="el4" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opel4">1%</div>
+            <button data-slider="el4" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">EDGE LENS 40PX RAZOR 65-95%</div>
+        <div class="s-row">
+          <div class="s-icon">&#9876;</div>
+          <div class="s-track" id="el5"></div>
+          <div class="s-val" id="elv5">50</div>
+          <div class="s-opacity">
+            <button data-slider="el5" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opel5">1%</div>
+            <button data-slider="el5" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">FULL LENS 30PX CONVEX 35-80%</div>
+        <div class="s-row">
+          <div class="s-icon">&#128269;</div>
+          <div class="s-track" id="el6"></div>
+          <div class="s-val" id="elv6">50</div>
+          <div class="s-opacity">
+            <button data-slider="el6" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opel6">1%</div>
+            <button data-slider="el6" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">Gładka soczewka (bez turbulencji) — środek idealnie czysty, krawędzie załamują jak prawdziwe szkło. Ostatni to pełna soczewka wypukła dla porównania.</p>
+    </div>
+
+    <!-- DRAG-ONLY REFRACTION -->
+    <div class="section">
+      <div class="label">Refrakcja przy przeciąganiu — puszczasz = czyste szkło</div>
+
+      <div class="s-block">
+        <div class="s-undertext">DRAG EDGE TURB 60PX 40-80%</div>
+        <div class="s-row">
+          <div class="s-icon">&#9995;</div>
+          <div class="s-track" id="dr1"></div>
+          <div class="s-val" id="drv1">50</div>
+          <div class="s-opacity">
+            <button data-slider="dr1" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opdr1">1%</div>
+            <button data-slider="dr1" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">DRAG EDGE LENS 40PX 45-85%</div>
+        <div class="s-row">
+          <div class="s-icon">&#128064;</div>
+          <div class="s-track" id="dr2"></div>
+          <div class="s-val" id="drv2">50</div>
+          <div class="s-opacity">
+            <button data-slider="dr2" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opdr2">1%</div>
+            <button data-slider="dr2" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">DRAG EDGE LENS 80PX 30-75%</div>
+        <div class="s-row">
+          <div class="s-icon">&#128171;</div>
+          <div class="s-track" id="dr3"></div>
+          <div class="s-val" id="drv3">50</div>
+          <div class="s-opacity">
+            <button data-slider="dr3" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opdr3">1%</div>
+            <button data-slider="dr3" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-undertext">DRAG FULL TURB 70PX UNIFORM</div>
+        <div class="s-row">
+          <div class="s-icon">&#127754;</div>
+          <div class="s-track" id="dr4"></div>
+          <div class="s-val" id="drv4">50</div>
+          <div class="s-opacity">
+            <button data-slider="dr4" data-dir="up">+</button>
+            <div class="s-opacity-val" id="opdr4">1%</div>
+            <button data-slider="dr4" data-dir="down">-</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">Przeciągasz = refrakcja narasta. Puszczasz = płynnie wraca do przezroczystego szkła.</p>
+    </div>
+
+    <!-- SLIDERY PIONOWE -->
+    <div class="section">
+      <div class="label">Centrum sterowania</div>
+      <div class="v-group">
+        <div class="v-col"><div class="v-track" id="sv1"></div><div class="v-lbl">&#9728;&#65039;</div></div>
+        <div class="v-col"><div class="v-track" id="sv2"></div><div class="v-lbl">&#128264;</div></div>
+        <div class="v-col"><div class="v-track" id="sv3"></div><div class="v-lbl">&#127759;</div></div>
+      </div>
+    </div>
+
+    <!-- PANELE SZKLANE -->
+    <div class="section">
+      <div class="label">Panele — blur</div>
+      <div class="cards">
+        <div class="glass-card" id="c1">
+          <h3>Clear</h3>
+          <p>Prawie przezroczysty. Blur 2px, minimalny tint.</p>
+        </div>
+        <div class="glass-card" id="c2">
+          <h3>Frosted</h3>
+          <p>Delikatne matowe szkło. Blur 6px, lekki frost.</p>
+        </div>
+        <div class="glass-card" id="c3">
+          <h3>Medium</h3>
+          <p>Wyraźny efekt szkła. Blur 12px, nasycone kolory.</p>
+        </div>
+        <div class="glass-card" id="c4">
+          <h3>Deep</h3>
+          <p>Mocne rozmycie. Blur 20px, głęboki frost.</p>
+        </div>
+        <div class="glass-card" id="c5">
+          <h3>Opaque</h3>
+          <p>Prawie nieprzezroczysty. Blur 30px, gęsty tint.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANELE SZKLANE — REFRAKCJA -->
+    <div class="section">
+      <div class="label">Panele — refrakcja</div>
+      <div class="cards">
+        <div class="glass-card" id="cr1">
+          <h3>Subtelna</h3>
+          <p>Refrakcja 4px. Ledwo widoczne zniekształcenie.</p>
+        </div>
+        <div class="glass-card" id="cr2">
+          <h3>Średnia</h3>
+          <p>Refrakcja 12px. Wyraźne falowanie tła.</p>
+        </div>
+        <div class="glass-card" id="cr3">
+          <h3>Mocna</h3>
+          <p>Refrakcja 30px. Widoczne przesunięcie pikseli.</p>
+        </div>
+        <div class="glass-card" id="cr4">
+          <h3>Szalona</h3>
+          <p>Refrakcja 60px. Maksymalne zniekształcenie.</p>
+        </div>
+        <div class="glass-card" id="cr5">
+          <h3>Combo</h3>
+          <p>Blur 10px + refrakcja 20px. Połączenie efektów.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Forged by <a href="https://cyberdemigods.com" target="_blank" rel="noopener">CyberDemigods</a></p>
+    </footer>
+  </div>
+
+  <script src="liquid-glass.js"></script>
+  <script>
+    // Znak wodny
+    var wt = 'LIQUID GLASS REFRACTION PRISM WATER LIGHT LENS CRYSTAL CAUSTICS OPTICS ';
+    document.getElementById('bgW').textContent = wt.repeat(80);
+
+    // Rejestr instancji sliderów (do kontroli przezroczystości)
+    var sliders = {};
+
+    // ── Slider 1: CLEAR — prawie przezroczysty, minimalny blur
+    sliders.s1 = LiquidGlass.slider('#s1', {
+      value: 50, thumbWidth: 96, thumbHeight: 56,
+      blur: 2, saturate: 1.2, brightness: 1.04,
+      motionBlurBoost: 3,
+      specular: 0.15,
+      tint: 'rgba(255,255,255,0.03)',
+      borderColor: 'rgba(255,255,255,0.25)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('v1').textContent = v; }
+    });
+
+    // ── Slider 2: MEDIUM — lekkie matowe szkło
+    sliders.s2 = LiquidGlass.slider('#s2', {
+      value: 70, thumbWidth: 104, thumbHeight: 60,
+      blur: 6, saturate: 1.4, brightness: 1.06,
+      motionBlurBoost: 6,
+      specular: 0.25,
+      tint: 'rgba(255,255,255,0.04)',
+      borderColor: 'rgba(255,255,255,0.35)', borderWidth: 1,
+      onChange: function(v) { document.getElementById('v2').textContent = v; }
+    });
+
+    // ── Slider 3: FROSTED — wyraźny efekt frosted glass
+    sliders.s3 = LiquidGlass.slider('#s3', {
+      value: 30, thumbWidth: 110, thumbHeight: 64,
+      blur: 14, saturate: 1.8, brightness: 1.10,
+      motionBlurBoost: 10,
+      specular: 0.4,
+      tint: 'rgba(255,255,255,0.05)',
+      borderColor: 'rgba(255,255,255,0.50)', borderWidth: 1.5,
+      onChange: function(v) { document.getElementById('v3').textContent = v; }
+    });
+
+    // ── Pionowe: clear / medium / frosted
+    LiquidGlass.slider('#sv1', {
+      orientation: 'vertical', value: 60,
+      thumbWidth: 64, thumbHeight: 80,
+      blur: 2, saturate: 1.2, specular: 0.15,
+      tint: 'rgba(255,255,255,0.03)',
+      borderColor: 'rgba(255,255,255,0.25)',
+    });
+    LiquidGlass.slider('#sv2', {
+      orientation: 'vertical', value: 45,
+      thumbWidth: 64, thumbHeight: 80,
+      blur: 6, saturate: 1.4, specular: 0.25,
+      tint: 'rgba(255,255,255,0.04)',
+      borderColor: 'rgba(255,255,255,0.35)',
+    });
+    LiquidGlass.slider('#sv3', {
+      orientation: 'vertical', value: 75,
+      thumbWidth: 64, thumbHeight: 80,
+      blur: 14, saturate: 1.8, specular: 0.4,
+      tint: 'rgba(255,255,255,0.05)',
+      borderColor: 'rgba(255,255,255,0.50)',
+    });
+
+    // ── Refrakcja: 4px — subtelna
+    sliders.r1 = LiquidGlass.slider('#r1', {
+      value: 50, thumbWidth: 100, thumbHeight: 58,
+      blur: 1, saturate: 1.1, brightness: 1.02,
+      refraction: 4, refractionFreq: 0.008, refractionOctaves: 1,
+      specular: 0.2,
+      tint: 'rgba(255,255,255,0.02)',
+      borderColor: 'rgba(255,255,255,0.30)', borderWidth: 1,
+      onChange: function(v) { document.getElementById('rv1').textContent = v; }
+    });
+
+    // ── Refrakcja: 12px — średnia
+    sliders.r2 = LiquidGlass.slider('#r2', {
+      value: 50, thumbWidth: 100, thumbHeight: 58,
+      blur: 2, saturate: 1.2, brightness: 1.03,
+      refraction: 12, refractionFreq: 0.010, refractionOctaves: 1,
+      specular: 0.25,
+      tint: 'rgba(255,255,255,0.03)',
+      borderColor: 'rgba(255,255,255,0.35)', borderWidth: 1,
+      onChange: function(v) { document.getElementById('rv2').textContent = v; }
+    });
+
+    // ── Refrakcja: 30px — mocna
+    sliders.r3 = LiquidGlass.slider('#r3', {
+      value: 50, thumbWidth: 100, thumbHeight: 58,
+      blur: 2, saturate: 1.3, brightness: 1.04,
+      refraction: 30, refractionFreq: 0.006, refractionOctaves: 2,
+      specular: 0.3,
+      tint: 'rgba(255,255,255,0.03)',
+      borderColor: 'rgba(255,255,255,0.40)', borderWidth: 1.5,
+      onChange: function(v) { document.getElementById('rv3').textContent = v; }
+    });
+
+    // ── Refrakcja: 60px — szalona
+    sliders.r4 = LiquidGlass.slider('#r4', {
+      value: 50, thumbWidth: 100, thumbHeight: 58,
+      blur: 3, saturate: 1.4, brightness: 1.05,
+      refraction: 60, refractionFreq: 0.005, refractionOctaves: 2,
+      specular: 0.35,
+      tint: 'rgba(255,255,255,0.03)',
+      borderColor: 'rgba(255,255,255,0.50)', borderWidth: 2,
+      onChange: function(v) { document.getElementById('rv4').textContent = v; }
+    });
+
+    // ── Refrakcja dynamiczna — 0 w spoczynku → 40 przy pełnej prędkości
+    sliders.r5 = LiquidGlass.slider('#r5', {
+      value: 50, thumbWidth: 100, thumbHeight: 58,
+      blur: 1, saturate: 1.15, brightness: 1.02,
+      refraction: 0, motionRefractionBoost: 40,
+      refractionFreq: 0.007, refractionOctaves: 1,
+      specular: 0.2,
+      tint: 'rgba(255,255,255,0.02)',
+      borderColor: 'rgba(255,255,255,0.30)', borderWidth: 1,
+      onChange: function(v) { document.getElementById('rv5').textContent = v; }
+    });
+
+    // ── Refrakcja 70px — pełna przezroczystość (blur 0, tint 1%)
+    sliders.rh1 = LiquidGlass.slider('#rh1', {
+      value: 50, thumbWidth: 104, thumbHeight: 60,
+      blur: 0, saturate: 1.05, brightness: 1.01,
+      refraction: 70, refractionFreq: 0.005, refractionOctaves: 2,
+      specular: 0.12,
+      tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.20)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('rhv1').textContent = v; }
+    });
+
+    // ── Refrakcja 80px — lekki frost (blur 8, tint 4%)
+    sliders.rh2 = LiquidGlass.slider('#rh2', {
+      value: 50, thumbWidth: 104, thumbHeight: 60,
+      blur: 8, saturate: 1.4, brightness: 1.06,
+      refraction: 80, refractionFreq: 0.004, refractionOctaves: 2,
+      specular: 0.3,
+      tint: 'rgba(255,255,255,0.04)',
+      borderColor: 'rgba(255,255,255,0.40)', borderWidth: 1,
+      onChange: function(v) { document.getElementById('rhv2').textContent = v; }
+    });
+
+    // ── Refrakcja 90px — duży blur (blur 18, tint 8%)
+    sliders.rh3 = LiquidGlass.slider('#rh3', {
+      value: 50, thumbWidth: 104, thumbHeight: 60,
+      blur: 18, saturate: 1.8, brightness: 1.10,
+      refraction: 90, refractionFreq: 0.004, refractionOctaves: 2,
+      specular: 0.4,
+      tint: 'rgba(255,255,255,0.08)',
+      borderColor: 'rgba(255,255,255,0.55)', borderWidth: 1.5,
+      onChange: function(v) { document.getElementById('rhv3').textContent = v; }
+    });
+
+    // ── Turbulence edge — faworyt z poprzedniej rundy (do porównania)
+    sliders.we6 = LiquidGlass.slider('#we6', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 60, refractionFreq: 0.005, refractionOctaves: 2,
+      edgeRefraction: true, edgeInner: 40, edgeOuter: 80,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('wev6').textContent = v; }
+    });
+
+    // ── Drag-only refraction ────────────────────────────────
+
+    // Drag edge turbulence 60px (faworyt + drag)
+    sliders.dr1 = LiquidGlass.slider('#dr1', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 60, edgeRefraction: true,
+      edgeInner: 40, edgeOuter: 80,
+      refractionFreq: 0.005, refractionOctaves: 2,
+      dragRefraction: true,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('drv1').textContent = v; }
+    });
+
+    // Drag edge lens 40px
+    sliders.dr2 = LiquidGlass.slider('#dr2', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 40, edgeLensRefraction: true,
+      edgeInner: 45, edgeOuter: 85,
+      dragRefraction: true,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('drv2').textContent = v; }
+    });
+
+    // Drag edge lens 80px wide
+    sliders.dr3 = LiquidGlass.slider('#dr3', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 80, edgeLensRefraction: true,
+      edgeInner: 30, edgeOuter: 75,
+      dragRefraction: true,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('drv3').textContent = v; }
+    });
+
+    // Drag full turbulence 70px (uniform, do porównania)
+    sliders.dr4 = LiquidGlass.slider('#dr4', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 70, refractionFreq: 0.005, refractionOctaves: 2,
+      dragRefraction: true,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('drv4').textContent = v; }
+    });
+
+    // ── Edge Lens: gładka soczewka krawędziowa ─────────────
+
+    // 20px subtle (50-90%) — delikatne załamanie
+    sliders.el1 = LiquidGlass.slider('#el1', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 20, edgeLensRefraction: true,
+      edgeInner: 50, edgeOuter: 90,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('elv1').textContent = v; }
+    });
+
+    // 40px medium (45-85%) — wyraźne krawędzie
+    sliders.el2 = LiquidGlass.slider('#el2', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 40, edgeLensRefraction: true,
+      edgeInner: 45, edgeOuter: 85,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('elv2').textContent = v; }
+    });
+
+    // 60px strong (40-80%) — mocne załamanie
+    sliders.el3 = LiquidGlass.slider('#el3', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 60, edgeLensRefraction: true,
+      edgeInner: 40, edgeOuter: 80,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('elv3').textContent = v; }
+    });
+
+    // 80px wide (30-75%) — szeroki pas soczewki
+    sliders.el4 = LiquidGlass.slider('#el4', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 80, edgeLensRefraction: true,
+      edgeInner: 30, edgeOuter: 75,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('elv4').textContent = v; }
+    });
+
+    // 40px razor (65-95%) — ultra wąski, ostry
+    sliders.el5 = LiquidGlass.slider('#el5', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 40, edgeLensRefraction: true,
+      edgeInner: 65, edgeOuter: 95,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('elv5').textContent = v; }
+    });
+
+    // Full lens 30px (35-80%) — pełna wypukła soczewka (porównanie)
+    sliders.el6 = LiquidGlass.slider('#el6', {
+      value: 50, thumbWidth: 108, thumbHeight: 62,
+      blur: 0, saturate: 1.0, brightness: 1.0,
+      refraction: 30, lensRefraction: true,
+      edgeInner: 35, edgeOuter: 80,
+      specular: 0.10, tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('elv6').textContent = v; }
+    });
+
+    // ── Edge refraction: wąska krawędź (center 50%–edge 90%)
+    sliders.re1 = LiquidGlass.slider('#re1', {
+      value: 50, thumbWidth: 104, thumbHeight: 60,
+      blur: 0, saturate: 1.05, brightness: 1.01,
+      refraction: 70, refractionFreq: 0.005, refractionOctaves: 2,
+      edgeRefraction: true, edgeInner: 50, edgeOuter: 90,
+      specular: 0.12,
+      tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.22)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('rev1').textContent = v; }
+    });
+
+    // ── Edge refraction: szeroka krawędź (center 15%–edge 70%)
+    sliders.re2 = LiquidGlass.slider('#re2', {
+      value: 50, thumbWidth: 104, thumbHeight: 60,
+      blur: 0, saturate: 1.05, brightness: 1.01,
+      refraction: 70, refractionFreq: 0.005, refractionOctaves: 2,
+      edgeRefraction: true, edgeInner: 15, edgeOuter: 70,
+      specular: 0.12,
+      tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.22)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('rev2').textContent = v; }
+    });
+
+    // ── Edge refraction: pełny gradient (center 0%–edge 100%)
+    sliders.re3 = LiquidGlass.slider('#re3', {
+      value: 50, thumbWidth: 104, thumbHeight: 60,
+      blur: 0, saturate: 1.05, brightness: 1.01,
+      refraction: 70, refractionFreq: 0.005, refractionOctaves: 2,
+      edgeRefraction: true, edgeInner: 0, edgeOuter: 100,
+      specular: 0.12,
+      tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.22)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('rev3').textContent = v; }
+    });
+
+    // ── Porównanie: full 70px (BEZ edge, dla kontrastu)
+    sliders.re4 = LiquidGlass.slider('#re4', {
+      value: 50, thumbWidth: 104, thumbHeight: 60,
+      blur: 0, saturate: 1.05, brightness: 1.01,
+      refraction: 70, refractionFreq: 0.005, refractionOctaves: 2,
+      edgeRefraction: false,
+      specular: 0.12,
+      tint: 'rgba(255,255,255,0.01)',
+      borderColor: 'rgba(255,255,255,0.22)', borderWidth: 0.5,
+      onChange: function(v) { document.getElementById('rev4').textContent = v; }
+    });
+
+    // ── Panele blur
+    LiquidGlass.init('#c1', {
+      blur: 2, saturate: 1.1, borderRadius: 16, specular: 0.15,
+      tint: 'rgba(255,255,255,0.02)',
+    });
+    LiquidGlass.init('#c2', {
+      blur: 6, saturate: 1.3, borderRadius: 16, specular: 0.2,
+      tint: 'rgba(255,255,255,0.03)',
+    });
+    LiquidGlass.init('#c3', {
+      blur: 12, saturate: 1.5, borderRadius: 16, specular: 0.3,
+      tint: 'rgba(255,255,255,0.04)',
+    });
+    LiquidGlass.init('#c4', {
+      blur: 20, saturate: 1.8, borderRadius: 16, specular: 0.35,
+      tint: 'rgba(255,255,255,0.06)',
+    });
+    LiquidGlass.init('#c5', {
+      blur: 30, saturate: 2.0, borderRadius: 16, specular: 0.4,
+      tint: 'rgba(255,255,255,0.12)',
+    });
+
+    // ── Panele refrakcja
+    LiquidGlass.init('#cr1', {
+      blur: 1, saturate: 1.1, borderRadius: 16, specular: 0.15,
+      tint: 'rgba(255,255,255,0.02)',
+      refraction: 4, refractionFreq: 0.008, refractionOctaves: 1,
+    });
+    LiquidGlass.init('#cr2', {
+      blur: 1, saturate: 1.2, borderRadius: 16, specular: 0.2,
+      tint: 'rgba(255,255,255,0.03)',
+      refraction: 12, refractionFreq: 0.010, refractionOctaves: 1,
+    });
+    LiquidGlass.init('#cr3', {
+      blur: 2, saturate: 1.3, borderRadius: 16, specular: 0.3,
+      tint: 'rgba(255,255,255,0.03)',
+      refraction: 30, refractionFreq: 0.006, refractionOctaves: 2,
+    });
+    LiquidGlass.init('#cr4', {
+      blur: 3, saturate: 1.4, borderRadius: 16, specular: 0.35,
+      tint: 'rgba(255,255,255,0.03)',
+      refraction: 60, refractionFreq: 0.005, refractionOctaves: 2,
+    });
+    LiquidGlass.init('#cr5', {
+      blur: 10, saturate: 1.6, borderRadius: 16, specular: 0.3,
+      tint: 'rgba(255,255,255,0.04)',
+      refraction: 20, refractionFreq: 0.008, refractionOctaves: 1,
+    });
+
+    // ── Mapowanie ID wyświetlaczy przezroczystości
+    var opLabels = {
+      s1: 'op1', s2: 'op2', s3: 'op3',
+      r1: 'opr1', r2: 'opr2', r3: 'opr3', r4: 'opr4', r5: 'opr5',
+      rh1: 'oprh1', rh2: 'oprh2', rh3: 'oprh3',
+      re1: 'opre1', re2: 'opre2', re3: 'opre3', re4: 'opre4',
+      we6: 'opwe6',
+      el1: 'opel1', el2: 'opel2', el3: 'opel3', el4: 'opel4', el5: 'opel5', el6: 'opel6',
+      dr1: 'opdr1', dr2: 'opdr2', dr3: 'opdr3', dr4: 'opdr4'
+    };
+
+    // ── Obsługa przycisków +/- przezroczystości (hold = ciągłe zmienianie)
+    var STEP = 0.01;
+    var HOLD_DELAY = 400;   // ms przed startem powtarzania
+    var HOLD_INTERVAL = 60; // ms między krokami przy trzymaniu
+
+    function applyTint(id, dir) {
+      var slider = sliders[id];
+      if (!slider) return;
+      var current = slider.getTintAlpha();
+      var next = dir === 'up'
+        ? Math.min(current + STEP, 0.5)
+        : Math.max(current - STEP, 0);
+      slider.setTint(next);
+      var labelId = opLabels[id];
+      if (labelId) {
+        document.getElementById(labelId).textContent = Math.round(next * 100) + '%';
+      }
+    }
+
+    document.querySelectorAll('.s-opacity button').forEach(function(btn) {
+      var holdTimer = null;
+      var repeatTimer = null;
+
+      function doStep() {
+        applyTint(btn.getAttribute('data-slider'), btn.getAttribute('data-dir'));
+      }
+
+      function startHold(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        doStep();
+        holdTimer = setTimeout(function() {
+          repeatTimer = setInterval(doStep, HOLD_INTERVAL);
+        }, HOLD_DELAY);
+      }
+
+      function stopHold() {
+        clearTimeout(holdTimer);
+        clearInterval(repeatTimer);
+        holdTimer = null;
+        repeatTimer = null;
+      }
+
+      btn.addEventListener('mousedown', startHold);
+      btn.addEventListener('touchstart', startHold, { passive: false });
+      window.addEventListener('mouseup', stopHold);
+      window.addEventListener('touchend', stopHold);
+      btn.addEventListener('mouseleave', stopHold);
+    });
+  </script>
+</body>
+</html>
