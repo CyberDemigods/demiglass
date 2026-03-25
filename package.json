@@ -1,0 +1,34 @@
+{
+  "name": "demiglass",
+  "version": "6.1.0",
+  "description": "Apple-style Liquid Glass effect for the web. Frosted translucent elements with backdrop blur, SVG refraction, specular highlights, and depth shadows.",
+  "main": "demiglass.js",
+  "files": [
+    "demiglass.js",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [
+    "glass",
+    "blur",
+    "refraction",
+    "ui",
+    "slider",
+    "apple",
+    "liquid-glass",
+    "backdrop-filter"
+  ],
+  "author": "CyberDemigods",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CyberDemigods/demiglass.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CyberDemigods/demiglass/issues"
+  },
+  "homepage": "https://glass.cyberdemigods.com"
+}

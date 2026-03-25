@@ -1,4 +1,4 @@
-# Liquid Glass JS
+# DemiGlass
 
 Apple-style Liquid Glass effect for the web. Frosted translucent elements with backdrop blur, SVG refraction, color absorption, directional edge lighting, specular highlights, and depth shadows.
 
@@ -6,7 +6,7 @@ Apple-style Liquid Glass effect for the web. Frosted translucent elements with b
 
 [Live Demo](https://glass.cyberdemigods.com)
 
-![Liquid Glass Preview](https://img.shields.io/badge/version-6.1.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![DemiGlass Preview](https://img.shields.io/badge/version-6.1.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
@@ -28,16 +28,20 @@ Apple-style Liquid Glass effect for the web. Frosted translucent elements with b
 
 ## Quick Start
 
-### CDN (coming soon)
+### CDN
 
 ```html
-<script src="liquid-glass.js"></script>
+<script src="https://unpkg.com/demiglass@6.1.0/demiglass.js"></script>
 ```
 
-### npm (coming soon)
+### npm
 
 ```bash
-npm install liquid-glass-js
+npm install demiglass
+```
+
+```js
+const DemiGlass = require('demiglass');
 ```
 
 ---
@@ -49,9 +53,9 @@ npm install liquid-glass-js
 ```html
 <div id="my-slider"></div>
 
-<script src="liquid-glass.js"></script>
+<script src="demiglass.js"></script>
 <script>
-  LiquidGlass.slider('#my-slider', {
+  DemiGlass.slider('#my-slider', {
     value: 50,
     thumbWidth: 96,
     thumbHeight: 56,
@@ -77,7 +81,7 @@ npm install liquid-glass-js
 </div>
 
 <script>
-  LiquidGlass.init('#my-card', {
+  DemiGlass.init('#my-card', {
     blur: 12,
     saturate: 1.6,
     borderRadius: 16,
@@ -92,7 +96,7 @@ npm install liquid-glass-js
 
 ## API Reference
 
-### `LiquidGlass.slider(selector, options)`
+### `DemiGlass.slider(selector, options)`
 
 Creates a glass slider component. Returns a slider instance.
 
@@ -133,7 +137,7 @@ Creates a glass slider component. Returns a slider instance.
 #### Slider instance methods
 
 ```js
-var slider = LiquidGlass.slider('#s', { value: 50 });
+var slider = DemiGlass.slider('#s', { value: 50 });
 
 slider.setValue(75);          // Set value programmatically
 slider.setTint(0.1);          // Set tint alpha (0 = transparent, 1 = white)
@@ -143,7 +147,7 @@ slider.destroy();             // Clean up
 
 ---
 
-### `LiquidGlass.init(selector, options)`
+### `DemiGlass.init(selector, options)`
 
 Applies glass effect to existing DOM elements. Returns a GlassElement instance (or array).
 
@@ -166,11 +170,11 @@ Applies glass effect to existing DOM elements. Returns a GlassElement instance (
 
 ---
 
-### `LiquidGlass.destroy(selector)`
+### `DemiGlass.destroy(selector)`
 
 Removes glass effect from elements.
 
-### `LiquidGlass.destroyAll()`
+### `DemiGlass.destroyAll()`
 
 Removes all glass effects.
 
@@ -203,7 +207,7 @@ Combine with any mode above. Refraction ramps up when the user drags, smoothly f
 ### Apple-style slider (recommended settings)
 
 ```js
-LiquidGlass.slider('#slider', {
+DemiGlass.slider('#slider', {
   thumbWidth: 108, thumbHeight: 62,
   blur: 0,
   refraction: 40,
@@ -219,7 +223,7 @@ LiquidGlass.slider('#slider', {
 ### Frosted card
 
 ```js
-LiquidGlass.init('.card', {
+DemiGlass.init('.card', {
   blur: 12,
   saturate: 1.6,
   borderRadius: 20,
@@ -230,7 +234,7 @@ LiquidGlass.init('.card', {
 ### Control Center vertical slider
 
 ```js
-LiquidGlass.slider('#volume', {
+DemiGlass.slider('#volume', {
   orientation: 'vertical',
   thumbWidth: 64, thumbHeight: 80,
   blur: 8, saturate: 1.5

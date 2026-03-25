@@ -1,5 +1,5 @@
 /**
- * LiquidGlass.js v6.1.0
+ * DemiGlass.js v6.1.0
  *
  * Apple-style Liquid Glass effect for the web.
  * Frosted translucent elements with backdrop blur, SVG refraction
@@ -10,7 +10,7 @@
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.LiquidGlass = factory();
+  else root.DemiGlass = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
@@ -570,7 +570,7 @@
     s.overflow = 'hidden';
     s.borderRadius = o.borderRadius + 'px';
     s.background = o.tint;
-    this.el.classList.add('liquid-glass');
+    this.el.classList.add('demiglass');
 
     // SVG refraction
     if (o.refraction > 0) {
@@ -668,7 +668,7 @@
     }
     [this.spec, this.innerShadow, this.borderEl].forEach(function(e) { if (e) e.remove(); });
     if (this._filter) this._filter.svg.remove();
-    this.el.classList.remove('liquid-glass');
+    this.el.classList.remove('demiglass');
   };
 
   // =================================================================
