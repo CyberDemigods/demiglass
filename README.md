@@ -2,11 +2,11 @@
 
 Apple-style Liquid Glass effect for the web. Frosted translucent elements with backdrop blur, SVG refraction, color absorption, directional edge lighting, specular highlights, and depth shadows.
 
-**Zero dependencies. Pure vanilla JS. ~8KB minified.**
+**Zero dependencies. Pure vanilla JS. ~7KB gzipped.**
 
 [Live Demo](https://glass.cyberdemigods.com)
 
-![DemiGlass Preview](https://img.shields.io/badge/version-6.1.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![DemiGlass Preview](https://img.shields.io/badge/version-6.2.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
@@ -16,7 +16,6 @@ Apple-style Liquid Glass effect for the web. Frosted translucent elements with b
 - **SVG refraction** — real pixel displacement via `feDisplacementMap` (turbulence or smooth lens)
 - **Edge-only refraction** — distortion at the edges, perfectly clear center (like real glass)
 - **Drag-reactive refraction** — effect appears only while interacting, fades on release
-- **Motion dynamics** — blur, saturation, and refraction intensify with movement speed
 - **Directional edge lighting** — brighter top border simulating overhead light
 - **Specular highlights** — animated gleam that follows cursor position
 - **Tint control** — adjustable transparency at runtime via `setTint()` / `getTintAlpha()`
@@ -31,7 +30,7 @@ Apple-style Liquid Glass effect for the web. Frosted translucent elements with b
 ### CDN
 
 ```html
-<script src="https://unpkg.com/demiglass@6.1.0/demiglass.js"></script>
+<script src="https://unpkg.com/demiglass@6.2.0/demiglass.js"></script>
 ```
 
 ### npm
@@ -121,10 +120,6 @@ Creates a glass slider component. Returns a slider instance.
 | `edgeInner` | number | `25` | % radius where edge effect starts |
 | `edgeOuter` | number | `85` | % radius where edge effect is full |
 | `dragRefraction` | boolean | `false` | Refraction only while dragging |
-| `motionBlurBoost` | number | `4` | Extra blur px at full drag speed |
-| `motionSaturateBoost` | number | `0.3` | Extra saturation at full drag speed |
-| `motionRefractionBoost` | number | `0` | Extra refraction px at full drag speed |
-| `lensDecay` | number | `0.88` | How fast effects fade (0-1, higher = slower) |
 | `specular` | number | `0.35` | Specular highlight intensity |
 | `tint` | string | `'rgba(255,255,255,0.04)'` | Background tint color |
 | `borderColor` | string | `'rgba(255,255,255,0.45)'` | Border color |
@@ -245,12 +240,16 @@ DemiGlass.slider('#volume', {
 
 ## Browser Support
 
-| Browser | Backdrop blur | SVG Refraction |
-|---------|:---:|:---:|
-| Chrome 76+ | Yes | Yes |
-| Edge 79+ | Yes | Yes |
-| Safari 14+ | Yes | Yes |
-| Firefox 103+ | Yes | Yes |
+| Browser | Backdrop blur | SVG Refraction | Method |
+|---------|:---:|:---:|:---:|
+| Chrome 76+ | Yes | Yes | `backdrop-filter: url()` |
+| Edge 79+ | Yes | Yes | `backdrop-filter: url()` |
+| Safari 14+ | Yes | Yes | WebGL fallback |
+| Firefox 103+ | Yes | Yes | `backdrop-filter: url()` |
+
+Safari does not support `backdrop-filter: url(#svg)`. DemiGlass automatically detects this and falls back to a WebGL shader that renders the displaced background onto a `<canvas>`. The effect is visually identical. For best results, call `DemiGlass.setBackground(css, 'fixed')` with your page's background CSS.
+
+> **Note:** While the WebGL fallback keeps the visual effect working on Safari, some edge cases (complex backgrounds, rapid resizing, compositing with other backdrop-filter elements) may not render perfectly. If you are primarily targeting Safari, test your specific use case thoroughly.
 
 ---
 
